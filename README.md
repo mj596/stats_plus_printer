@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ------------------------------------------------------------------------------
 Known bugs:
 ------------------------------------------------------------------------------
@@ -20,3 +21,6 @@ when pip3 install numpy
 env/bin/pip3 download matplotlib
 Edit setup.cfg. Around line 70 in the file is a commented line, uncomment the line such that you have:
 tkagg = False
+=======
+# stats_plus_printer
+>>>>>>> 425e87856c722e47e304cfbad79cfcbc85808ee5

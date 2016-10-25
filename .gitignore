@@ -92,3 +92,4 @@ env/
 # local packages
 cx_Oracle-5.2.1
 matplotlib-1.5.3
+printer_out
