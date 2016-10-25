@@ -57,9 +57,12 @@ class PrEDIctionPrinter:
             time_range_start = self.data.name.split('_')[4]
             time_range_end = self.data.name.split('_')[5]            
             plot_type = self.data.name.split('_')[6]
-            
-            plt.text('00:00:00', 0.75*self.data['max'].max(), 'Client: ' + client_desc + '\n' + 'Application: ' + client_document_type + '\n' + 'Weekday: ' + client_weekday + '\n' + 'Grouped by: ' + client_type + '\n' + 'From: ' + time_range_start + '\n' + 'To: ' + time_range_end + '\n' + 'PlotType: ' + plot_type, fontproperties=self.font)
+            cut_time = self.data.name.split('_')[7]
 
+            ax = plt.gca()
+            
+            plt.text(0.1, 0.8, 'Client: ' + client_desc + '\n' + 'Application: ' + client_document_type + '\n' + 'Weekday: ' + client_weekday + '\n' + 'Grouped by: ' + client_type + '\n' + 'From: ' + time_range_start + '\n' + 'To: ' + time_range_end + '\n' + 'PlotType: ' + plot_type + '\n' + 'TimeCut: ' + cut_time, fontproperties=self.font)
+      
             plt.ylim([-10, 1.1*self.data['max'].max()])
 
             plt.legend(loc=2, prop=self.font, fancybox=None, frameon=None)
@@ -69,27 +72,45 @@ class PrEDIctionPrinter:
             plt.ylabel('Number of EDI transmissions', fontproperties=self.font)
 
             self.folder = 'printer_out' + '/' + plot_type + '/' + 'Client' + client_desc + 'Application' + client_document_type
-            self.filename = 'Client' + client_desc + 'Application' + client_document_type + 'Weekday' + client_weekday + 'GroupedBy' + client_type + 'PlotType' + plot_type + 'folded'
+            self.filename = 'Client' + client_desc + 'Application' + client_document_type + 'Weekday' + client_weekday + 'GroupedBy' + client_type + 'PlotType' + plot_type + 'CutTime' + cut_time
         
         if not os.path.exists(self.folder):
             os.makedirs(self.folder)
             
-        plt.savefig(self.folder + '/' + self.filename+'.png', dpi=300)
+        plt.savefig(self.folder + '/' + self.filename+'.png', dpi=100)
         
     def print_grouped(self):
         plt.clf()
+
+        time_error = datetime.timedelta( seconds=int(self.data['delta'].values[0])/1e9 ) * np.ones(len(self.data['delta'].values))
+        histogram_width_in_days = time_error[0].total_seconds()/(3600*24)
         
         with plt.style.context(('ggplot')):
-            xtime = [self.datetime.datetime.strptime(elem, '%Y-%m-%d %H:%M') for elem in self.data.get_time()]
-            histogram_width_in_days = 2*self.data.get_delta_time()[0].total_seconds()/(3600*24)
-            plt.bar(xtime, self.data.get_mean(), width=histogram_width_in_days, alpha=0.5)
-                    
-            plt.xticks(rotation=20, size=10)
-                    
-            plt.title(self.filename)
-            plt.ylabel('Number of EDI transmissions')
-
-        if not os.path.exists(self.folder):
-            os.makedirs(self.folder + '/out/')
+            plt.bar(self.data.index, self.data['amount'], width=histogram_width_in_days, alpha=0.5)
+            plt.plot()
             
-        plt.savefig(self.folder + '/out/' + self.filename+'.png', dpi=300)
+            client_desc = (self.data.name.split('_')[0]).replace('\'','')
+            client_document_type = (self.data.name.split('_')[1]).replace('\'','')
+            client_type = self.data.name.split('_')[2]
+            client_weekday = self.data.name.split('_')[3]
+            time_range_start = self.data.name.split('_')[4]
+            time_range_end = self.data.name.split('_')[5]            
+            plot_type = self.data.name.split('_')[6]
+            cut_time = self.data.name.split('_')[7]
+            
+            self.folder = 'printer_out' + '/' + plot_type + '/' + 'Client' + client_desc + 'Application' + client_document_type
+            self.filename = 'Client' + client_desc + 'Application' + client_document_type + 'Weekday' + client_weekday + 'GroupedBy' + client_type + 'PlotType' + plot_type + 'grouped' + 'CutTime' + cut_time
+
+            ax = plt.gca()
+            
+            plt.text(0.05, 0.8, 'Client: ' + client_desc + '\n' + 'Application: ' + client_document_type + '\n' + 'Weekday: ' + client_weekday + '\n' + 'Grouped by: ' + client_type + '\n' + 'From: ' + time_range_start + '\n' + 'To: ' + time_range_end + '\n' + 'PlotType: ' + plot_type + '\n' + 'TimeCut: ' + cut_time, fontproperties=self.font, transform=ax.transAxes)
+
+            
+            plt.xticks(rotation=20, fontproperties=self.font)
+            plt.yticks(fontproperties=self.font)            
+            plt.ylabel('Number of EDI transmissions', fontproperties=self.font)            
+            
+            if not os.path.exists(self.folder):
+                os.makedirs(self.folder)
+                
+            plt.savefig(self.folder + '/' + self.filename+'.png', dpi=100)

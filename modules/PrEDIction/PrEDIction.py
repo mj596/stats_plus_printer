@@ -52,9 +52,15 @@ class PrEDIction:
 
         return returnData
 
-    def pregroup_data(self, data, type):
+    def pregroup_data(self, data, type, cut_time):
         data_frame = pd.DataFrame( data=np.ones(len(data)), index=data, columns = ['amount'] )
-        grouped = data_frame.groupby( pd.TimeGrouper(freq=type) ).count()
+        if cut_time == 'All':
+            cut_data_frame = data_frame
+        else:
+            start_time = data_frame.index.max()-pd.Timedelta(cut_time)
+            cut_data_frame = data_frame[data_frame.index > start_time]
+            
+        grouped = cut_data_frame.groupby( pd.TimeGrouper(freq=type) ).count()
         return grouped
     
     def prefilter_data_by_weekday(self, data, weekday):
@@ -68,43 +74,17 @@ class PrEDIction:
             filtered = data[data.index.weekday == weekday_number]
 
         return filtered
-
-    def get_type(self, type):
-        time_unit = 'H'
-        if 'Min' in type:
-            time_unit = 'Min'
-        if 'H' in type:
-            time_unit = 'H'
-
-        time_amount = int(type.strip(time_unit))
-            
-        return time_amount, time_unit
-
-    def get_delta_time(self, time_amount, time_unit):
-        delta_time = 0
+    
+    def group_data(self, data, type, client):
+        df = pd.DataFrame( data )
         
-        if time_unit == 'Min':
-            delta_time = datetime.timedelta(hours=0, minutes=int(0.5*time_amount), seconds=0)
-        elif time_unit == 'H':
-            delta_time = datetime.timedelta(hours=0, minutes=int(0.5*60*time_amount), seconds=0)
-            
-        return delta_time
+        df.name = client.get_desc() + '_' + client.get_document_type() + '_' + type + '_' + client.get_weekday() + '_' + str(data.index.min()) + '_' + str(data.index.max()) + '_' + str(client.get_plot_type()) + '_' + str(client.get_cut_time())
 
-    def group_data(self, data, type):
-        time_amount, time_unit = self.get_type(type)
-        delta_time = self.get_delta_time(time_amount, time_unit)
+        grouped_data = { 'delta': [] }
+        grouped_data['delta'].append(pd.Timedelta(type))
+        df['delta'] = pd.Series(grouped_data['delta'], index=df.index)
         
-        tsdc = PrEDIctionData.PrEDIctionData()
-
-        tsdc.set_time_amount(time_amount)
-        tsdc.set_time_unit(time_unit)
-
-        selector = [pd.to_datetime(str(t)).strftime("%Y-%m-%d %H:%M") for t in data.index]
-        tsdc.set_time(selector)
-        tsdc.set_delta_time(np.ones(len(selector)) * delta_time)        
-        tsdc.set_mean(data.values.transpose()[0])
-
-        return tsdc
+        return df
 
     def cumsum_folded_data(self, data):        
         cumsum_data = data.groupby( pd.TimeGrouper(freq='D'))
@@ -112,7 +92,7 @@ class PrEDIction:
 
     def fold_data(self, data, type, client):
         df = pd.DataFrame(index=pd.date_range("00:00", "23:59", freq=type).time)
-        df.name = client.get_desc() + '_' + client.get_document_type() + '_' + type + '_' + client.get_weekday() + '_' + str(data.index.min()) + '_' + str(data.index.max()) + '_' + str(client.get_plot_type())
+        df.name = client.get_desc() + '_' + client.get_document_type() + '_' + type + '_' + client.get_weekday() + '_' + str(data.index.min()) + '_' + str(data.index.max()) + '_' + str(client.get_plot_type()) + '_' + str(client.get_cut_time())
         
         folded_data = { 'delta': [],
                         'mean': [],

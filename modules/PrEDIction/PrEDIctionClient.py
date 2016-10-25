@@ -4,6 +4,7 @@ class PrEDIctionClient:
         self.client = None
         self.weekday = None
         self.plot_type = None
+        self.cut_time = None
         
     def set_client(self, client):
         self.client = client
@@ -45,3 +46,9 @@ class PrEDIctionClient:
 
     def get_plot_type(self):
         return self.plot_type
+
+    def set_cut_time(self, cut_time):
+        self.cut_time = cut_time
+
+    def get_cut_time(self):
+        return self.cut_time
